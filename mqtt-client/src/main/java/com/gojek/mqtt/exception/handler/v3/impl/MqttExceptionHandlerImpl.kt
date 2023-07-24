@@ -11,7 +11,7 @@ import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 import java.util.Random
 import javax.net.ssl.SSLHandshakeException
-import org.eclipse.paho.client.mqttv3.MqttException
+import org.eclipse.paho.client.mqttv3t.MqttException
 
 internal class MqttExceptionHandlerImpl(
     private val runnableScheduler: IRunnableScheduler,

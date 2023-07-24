@@ -2,7 +2,7 @@ package com.gojek.mqtt.policies.hostfallback
 
 import com.gojek.mqtt.model.ServerUri
 import java.lang.IllegalArgumentException
-import org.eclipse.paho.client.mqttv3.MqttException
+import org.eclipse.paho.client.mqttv3t.MqttException
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith

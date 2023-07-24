@@ -9,11 +9,11 @@ import com.nhaarman.mockitokotlin2.whenever
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.eclipse.paho.client.mqttv3.ILogger
-import org.eclipse.paho.client.mqttv3.IMqttActionListener
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient
-import org.eclipse.paho.client.mqttv3.MqttToken
-import org.eclipse.paho.client.mqttv3.internal.ClientComms
+import org.eclipse.paho.client.mqttv3t.ILogger
+import org.eclipse.paho.client.mqttv3t.IMqttActionListener
+import org.eclipse.paho.client.mqttv3t.IMqttAsyncClient
+import org.eclipse.paho.client.mqttv3t.MqttToken
+import org.eclipse.paho.client.mqttv3t.internal.ClientComms
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,7 +28,7 @@ class WorkManagerPingSenderTest {
     private val logger = mock<ILogger>()
     private val pingSenderEvents = mock<IPingSenderEvents>()
 
-    private val pingSender = WorkManagerPingSender(pingWorkScheduler, pingSenderConfig, clock)
+    private val pingSender = WorkManagerPingSenderGojek(pingWorkScheduler, pingSenderConfig, clock)
 
     @Before
     fun setup() {

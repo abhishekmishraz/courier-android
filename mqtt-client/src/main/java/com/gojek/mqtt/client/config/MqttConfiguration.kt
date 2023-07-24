@@ -4,7 +4,7 @@ import com.gojek.courier.logging.ILogger
 import com.gojek.mqtt.auth.Authenticator
 import com.gojek.mqtt.client.MqttInterceptor
 import com.gojek.mqtt.exception.handler.v3.AuthFailureHandler
-import com.gojek.mqtt.pingsender.MqttPingSender
+import com.gojek.mqtt.pingsender.GojekMqttPingSender
 import com.gojek.mqtt.policies.connectretrytime.IConnectRetryTimePolicy
 import com.gojek.mqtt.policies.connecttimeout.IConnectTimeoutPolicy
 import com.gojek.mqtt.policies.subscriptionretry.ISubscriptionRetryPolicy
@@ -18,8 +18,9 @@ abstract class MqttConfiguration(
     open val logger: ILogger,
     open val authenticator: Authenticator,
     open val authFailureHandler: AuthFailureHandler?,
-    open val pingSender: MqttPingSender,
+    open val pingSender: GojekMqttPingSender,
     open val mqttInterceptorList: List<MqttInterceptor>,
     open val persistenceOptions: PersistenceOptions,
-    open val experimentConfigs: ExperimentConfigs
+    open val experimentConfigs: ExperimentConfigs,
+    open val shouldRetryOnErrors : Boolean
 )

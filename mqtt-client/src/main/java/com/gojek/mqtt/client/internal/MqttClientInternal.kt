@@ -71,7 +71,8 @@ internal class MqttClientInternal(
             keepAliveProvider = keepAliveProvider,
             keepAliveFailureHandler = keepAliveFailureHandler,
             eventHandler = eventHandler,
-            pingEventHandler = PingEventHandler(eventHandler)
+            pingEventHandler = PingEventHandler(eventHandler),
+            shouldRetryOnException = mqttConfiguration.shouldRetryOnErrors
         )
     }
 

@@ -3,12 +3,12 @@ import plugin.AndroidLibraryConfigurationPlugin
 apply<AndroidLibraryConfigurationPlugin>()
 apply("$rootDir/gradle/script-ext.gradle")
 
-val version = ext.get("gitVersionName")
+val version = "10.0.3"
 
 ext {
     set("PUBLISH_GROUP_ID", "com.gojek.courier")
     set("PUBLISH_ARTIFACT_ID", "mqtt-client")
-    set("PUBLISH_VERSION", ext.get("gitVersionName"))
+    set("PUBLISH_VERSION", version)
     set("minimumCoverage", "0.1")
     set(
         "fileFilter",

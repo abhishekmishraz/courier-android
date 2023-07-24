@@ -10,7 +10,7 @@ import com.gojek.mqtt.client.config.PersistenceOptions
 import com.gojek.mqtt.client.config.PersistenceOptions.PahoPersistenceOptions
 import com.gojek.mqtt.constants.DEFAULT_WAKELOCK_TIMEOUT
 import com.gojek.mqtt.exception.handler.v3.AuthFailureHandler
-import com.gojek.mqtt.pingsender.MqttPingSender
+import com.gojek.mqtt.pingsender.GojekMqttPingSender
 import com.gojek.mqtt.policies.connectretrytime.ConnectRetryTimeConfig
 import com.gojek.mqtt.policies.connectretrytime.ConnectRetryTimePolicy
 import com.gojek.mqtt.policies.connectretrytime.IConnectRetryTimePolicy
@@ -34,10 +34,11 @@ data class MqttV3Configuration(
     override val logger: ILogger = NoOpLogger(),
     override val authenticator: Authenticator,
     override val authFailureHandler: AuthFailureHandler? = null,
-    override val pingSender: MqttPingSender,
+    override val pingSender: GojekMqttPingSender,
     override val mqttInterceptorList: List<MqttInterceptor> = emptyList(),
     override val persistenceOptions: PersistenceOptions = PahoPersistenceOptions(),
-    override val experimentConfigs: ExperimentConfigs = ExperimentConfigs()
+    override val experimentConfigs: ExperimentConfigs = ExperimentConfigs(),
+    override val shouldRetryOnErrors : Boolean = false
 ) : MqttConfiguration(
     connectRetryTimePolicy = connectRetryTimePolicy,
     connectTimeoutPolicy = connectTimeoutPolicy,
@@ -50,5 +51,6 @@ data class MqttV3Configuration(
     pingSender = pingSender,
     mqttInterceptorList = mqttInterceptorList,
     persistenceOptions = persistenceOptions,
-    experimentConfigs = experimentConfigs
+    experimentConfigs = experimentConfigs,
+    shouldRetryOnErrors = shouldRetryOnErrors
 )

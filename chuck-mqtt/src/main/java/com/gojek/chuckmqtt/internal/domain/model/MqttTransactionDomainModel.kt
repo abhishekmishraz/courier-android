@@ -1,6 +1,6 @@
 package com.gojek.chuckmqtt.internal.domain.model
 
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage
+import org.eclipse.paho.client.mqttv3t.internal.wire.MqttWireMessage
 
 internal data class MqttTransactionDomainModel(
     val id: Long,

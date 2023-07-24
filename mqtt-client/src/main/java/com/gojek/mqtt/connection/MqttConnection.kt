@@ -20,7 +20,7 @@ import com.gojek.mqtt.logging.PahoLogger
 import com.gojek.mqtt.model.ServerUri
 import com.gojek.mqtt.network.NetworkHandler
 import com.gojek.mqtt.persistence.impl.PahoPersistence
-import com.gojek.mqtt.pingsender.MqttPingSender
+import com.gojek.mqtt.pingsender.GojekMqttPingSender
 import com.gojek.mqtt.pingsender.toPahoPingSender
 import com.gojek.mqtt.policies.connectretrytime.IConnectRetryTimePolicy
 import com.gojek.mqtt.policies.connecttimeout.IConnectTimeoutPolicy
@@ -31,23 +31,23 @@ import com.gojek.mqtt.send.listener.IMessageSendListener
 import com.gojek.mqtt.subscription.SubscriptionStore
 import com.gojek.mqtt.utils.NetworkUtils
 import com.gojek.mqtt.wakelock.WakeLockProvider
-import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions
-import org.eclipse.paho.client.mqttv3.IExperimentsConfig
-import org.eclipse.paho.client.mqttv3.IMqttActionListener
-import org.eclipse.paho.client.mqttv3.IMqttActionListenerNew
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
-import org.eclipse.paho.client.mqttv3.IMqttToken
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient
-import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttException
-import org.eclipse.paho.client.mqttv3.MqttException.REASON_CODE_INVALID_SUBSCRIPTION
-import org.eclipse.paho.client.mqttv3.MqttException.REASON_CODE_UNEXPECTED_ERROR
-import org.eclipse.paho.client.mqttv3.MqttMessage
-import org.eclipse.paho.client.mqttv3.MqttSecurityException
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttSuback
-import org.eclipse.paho.client.mqttv3.internal.wire.SubscribeFlags
-import org.eclipse.paho.client.mqttv3.internal.wire.UserProperty
+import org.eclipse.paho.client.mqttv3t.DisconnectedBufferOptions
+import org.eclipse.paho.client.mqttv3t.IExperimentsConfig
+import org.eclipse.paho.client.mqttv3t.IMqttActionListener
+import org.eclipse.paho.client.mqttv3t.IMqttActionListenerNew
+import org.eclipse.paho.client.mqttv3t.IMqttDeliveryToken
+import org.eclipse.paho.client.mqttv3t.IMqttToken
+import org.eclipse.paho.client.mqttv3t.MqttAsyncClient
+import org.eclipse.paho.client.mqttv3t.MqttCallback
+import org.eclipse.paho.client.mqttv3t.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3t.MqttException
+import org.eclipse.paho.client.mqttv3t.MqttException.REASON_CODE_INVALID_SUBSCRIPTION
+import org.eclipse.paho.client.mqttv3t.MqttException.REASON_CODE_UNEXPECTED_ERROR
+import org.eclipse.paho.client.mqttv3t.MqttMessage
+import org.eclipse.paho.client.mqttv3t.MqttSecurityException
+import org.eclipse.paho.client.mqttv3t.internal.wire.MqttSuback
+import org.eclipse.paho.client.mqttv3t.internal.wire.SubscribeFlags
+import org.eclipse.paho.client.mqttv3t.internal.wire.UserProperty
 
 internal class MqttConnection(
     private val context: Context,
@@ -58,10 +58,11 @@ internal class MqttConnection(
     private val messageSendListener: IMessageSendListener,
     private val pahoPersistence: PahoPersistence,
     private val networkHandler: NetworkHandler,
-    private val mqttPingSender: MqttPingSender,
+    private val gojekMqttPingSender: GojekMqttPingSender,
     private val keepAliveFailureHandler: KeepAliveFailureHandler,
     private val clock: Clock,
-    private val subscriptionStore: SubscriptionStore
+    private val subscriptionStore: SubscriptionStore,
+    private val shouldReconnectOnException : Boolean = false
 ) : IMqttConnection {
     private var forceDisconnect = false
 
@@ -241,8 +242,9 @@ internal class MqttConnection(
             object : IMqttActionListenerNew {
                 override fun onSuccess(arg0: IMqttToken) {
                     logger.d(TAG, "Message successfully sent for message id : " + arg0.messageId)
+                    arg0.response.payload
                     val packet = arg0.userContext as MqttSendPacket
-                    messageSendListener.onSuccess(packet)
+                    messageSendListener.onSuccess(packet, arg0)
                 }
 
                 override fun onFailure(
@@ -390,7 +392,7 @@ internal class MqttConnection(
             null,
             pahoPersistence,
             connectionConfig.maxInflightMessages,
-            this.mqttPingSender.toPahoPingSender(),
+            this.gojekMqttPingSender.toPahoPingSender(),
             PahoLogger(connectionConfig.logger),
             PahoEventHandler(connectionConfig.connectionEventHandler),
             getPahoExperimentsConfig(),
@@ -505,7 +507,7 @@ internal class MqttConnection(
                     throwable = mqttException,
                     timeTakenMillis = (clock.nanoTime() - subscribeStartTime).fromNanosToMillis()
                 )
-                runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, true)
+                runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, shouldReconnectOnException)
             } catch (illegalArgumentException: IllegalArgumentException) {
                 connectionConfig.connectionEventHandler.onMqttSubscribeFailure(
                     topics = topicMap,
@@ -536,7 +538,7 @@ internal class MqttConnection(
                     throwable = mqttException,
                     timeTakenMillis = (clock.nanoTime() - unsubscribeStartTime).fromNanosToMillis()
                 )
-                runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, true)
+                runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, shouldReconnectOnException)
             }
         }
     }
