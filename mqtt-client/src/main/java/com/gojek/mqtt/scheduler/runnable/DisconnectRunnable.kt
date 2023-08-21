@@ -8,6 +8,7 @@ internal class DisconnectRunnable(
 ) : Runnable {
     private var reconnect = true
     private var clearState = false
+    private var shouldSendConnectionLost = true
 
     fun setReconnect(isReconnect: Boolean) {
         reconnect = isReconnect
@@ -17,9 +18,13 @@ internal class DisconnectRunnable(
         this.clearState = clearState
     }
 
+    fun setShouldSendConnectionLost(shouldSendConnectionLost : Boolean){
+        this.shouldSendConnectionLost = shouldSendConnectionLost
+    }
+
     override fun run() {
         try {
-            clientSchedulerBridge.disconnectMqtt(clearState)
+            clientSchedulerBridge.disconnectMqtt(clearState, shouldSendConnectionLost)
         } finally {
             if (reconnect) {
                 // try reconnection after 10 ms

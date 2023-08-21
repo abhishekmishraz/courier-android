@@ -136,7 +136,7 @@ public interface IMqttClient
 	 *             if any unexpected error
 	 * @since 0.4.1
 	 */
-	public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout) throws MqttException;
+	public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout,  boolean shouldSendConnectionLost) throws MqttException;
 
 	/**
 	 * Subscribe to a topic, which may include wildcards using a QoS of 1.

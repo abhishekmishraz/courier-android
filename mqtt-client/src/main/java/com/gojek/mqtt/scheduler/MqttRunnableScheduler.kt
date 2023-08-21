@@ -53,8 +53,13 @@ internal class MqttRunnableScheduler(
         }
     }
 
-    override fun disconnectMqtt(reconnect: Boolean, clearState: Boolean) {
+    override fun disconnectMqtt(
+        reconnect: Boolean,
+        clearState: Boolean,
+        shouldSendConnectionLost: Boolean
+    ) {
         try {
+            disconnectRunnable.setShouldSendConnectionLost(shouldSendConnectionLost)
             sendThreadEventIfNotAlive()
             disconnectRunnable.setReconnect(reconnect)
             disconnectRunnable.setClearState(clearState)

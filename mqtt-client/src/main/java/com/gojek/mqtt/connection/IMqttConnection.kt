@@ -19,7 +19,7 @@ internal interface IMqttConnection {
 
     fun publish(mqttPacket: MqttSendPacket)
 
-    fun disconnect()
+    fun disconnect(shouldSendConnectionLost : Boolean)
 
     fun handleException(exception: Exception?, reconnect: Boolean)
     fun isConnected(): Boolean

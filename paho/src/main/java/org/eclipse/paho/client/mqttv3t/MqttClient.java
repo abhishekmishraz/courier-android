@@ -258,9 +258,9 @@ public class MqttClient implements IMqttClient
 	 * 
 	 * @see org.eclipse.paho.client.mqttv3.IMqttAsyncClient#disconnectForcibly(long, long)
 	 */
-	public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout) throws MqttException
+	public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout, boolean shouldSendConnectionLost) throws MqttException
 	{
-		aClient.disconnectForcibly(quiesceTimeout, disconnectTimeout);
+		aClient.disconnectForcibly(quiesceTimeout, disconnectTimeout, shouldSendConnectionLost);
 	}
 
 	/*

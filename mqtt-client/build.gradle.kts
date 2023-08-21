@@ -47,7 +47,8 @@ dependencies {
     implementation(project(":timer-pingsender"))
 
     implementation(deps.android.room.roomRuntime)
-    kapt(deps.android.room.roomCompiler)
+//    kapt(deps.android.room.roomCompiler)
+    implementation ("androidx.room:room-runtime:2.3.0")
 
     implementation(deps.rx.java)
 

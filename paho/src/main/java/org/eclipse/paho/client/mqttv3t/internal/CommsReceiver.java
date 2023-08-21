@@ -218,7 +218,7 @@ public class CommsReceiver implements Runnable
 				logger.logEvent("offline_msg_rcv_event", false, this.clientComms.getClient().getServerURI()
 						, (System.currentTimeMillis() - sTime), ex, ex.getReasonCode(), System.currentTimeMillis(), 0, threadId, -1);
 				// Token maybe null but that is handled in shutdown
-				clientComms.shutdownConnection(token, ex);
+				clientComms.shutdownConnection(token, ex, false);
 			}
 			catch (IOException ioe)
 			{
@@ -233,7 +233,7 @@ public class CommsReceiver implements Runnable
 				// only shutdown the connection if we're not already shutting down.
 				if (!clientComms.isDisconnecting())
 				{
-					clientComms.shutdownConnection(token, new MqttException(MqttException.REASON_CODE_CONNECTION_LOST, ioe));
+					clientComms.shutdownConnection(token, new MqttException(MqttException.REASON_CODE_CONNECTION_LOST, ioe), false);
 				} // else {
 			}
 			finally

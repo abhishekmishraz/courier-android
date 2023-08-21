@@ -333,7 +333,7 @@ public class ClientComms {
      * Shuts down the connection to the server. This may have been invoked as a result of a user calling disconnect or an abnormal disconnection. The method may be invoked multiple
      * times in parallel as each thread when it receives an error uses this method to ensure that shutdown completes successfully.
      */
-    public void shutdownConnection(MqttToken token, MqttException reason) {
+    public void shutdownConnection(MqttToken token, MqttException reason, boolean shouldSendConnectionLost) {
         final String methodName = "shutdownConnection";
         boolean wasConnected;
         MqttToken endToken = null; // Token to notify after disconnect completes
@@ -441,10 +441,10 @@ public class ClientComms {
 
         // While disconnecting, close may have been requested - try it now
         synchronized (conLock) {
-//            if (wasConnected && callback != null) {
-//                // Let the user know client has disconnected either normally or abnormally
-//                callback.connectionLost(reason);
-//            }
+            if (wasConnected && callback != null && shouldSendConnectionLost) {
+                // Let the user know client has disconnected either normally or abnormally
+                callback.connectionLost(reason);
+            }
 
             if (closePending) {
                 try {
@@ -528,7 +528,7 @@ public class ClientComms {
     /**
      * Disconnect the connection and reset all the states.
      */
-    public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout) throws MqttException {
+    public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout, Boolean shouldSendConnectionLost) throws MqttException {
         // Allow current inbound and outbound work to complete
         clientState.quiesce(quiesceTimeout);
         MqttToken token = new MqttToken(client.getClientId());
@@ -542,7 +542,7 @@ public class ClientComms {
             // ignore, probably means we failed to send the disconnect packet.
         } finally {
             token.internalTok.markComplete(null, null);
-            shutdownConnection(token, null);
+            shutdownConnection(token, null, shouldSendConnectionLost);
         }
     }
 
@@ -711,7 +711,7 @@ public class ClientComms {
 
             if (mqttEx != null) {
                 logger.logEvent(eventType, false, client.getServerURI(), (System.currentTimeMillis() - time), mqttEx, mqttEx.getReasonCode(), 0, 0, "", 0);
-                shutdownConnection(conToken, mqttEx);
+                shutdownConnection(conToken, mqttEx, true);
             }
         }
     }
@@ -750,7 +750,7 @@ public class ClientComms {
             } catch (MqttException ex) {
             } finally {
                 token.internalTok.markComplete(null, null);
-                shutdownConnection(token, null);
+                shutdownConnection(token, null, true);
             }
         }
     }
@@ -811,7 +811,7 @@ public class ClientComms {
             mex = (MqttException) ex;
         }
 
-        shutdownConnection(null, mex);
+        shutdownConnection(null, mex, true);
     }
 
     public void setPersistence(MqttClientPersistence persistence) {

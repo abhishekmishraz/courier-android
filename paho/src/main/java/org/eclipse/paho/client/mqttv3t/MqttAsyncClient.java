@@ -726,14 +726,20 @@ public class MqttAsyncClient implements IMqttAsyncClient
 		disconnectForcibly(QUIESCE_TIMEOUT, disconnectTimeout);
 	}
 
+	@Override
+	public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout)
+			throws MqttException {
+		disconnectForcibly(QUIESCE_TIMEOUT, disconnectTimeout, true);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 *
 	 * @see org.eclipse.paho.client.mqttv3.IMqttAsyncClient#disconnectForcibly(long, long)
 	 */
-	public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout) throws MqttException
+	public void disconnectForcibly(long quiesceTimeout, long disconnectTimeout,  boolean shouldSendConnectionLost) throws MqttException
 	{
-		comms.disconnectForcibly(quiesceTimeout, disconnectTimeout);
+		comms.disconnectForcibly(quiesceTimeout, disconnectTimeout, shouldSendConnectionLost);
 	}
 
 	/*

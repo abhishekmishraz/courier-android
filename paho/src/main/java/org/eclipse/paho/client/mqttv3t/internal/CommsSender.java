@@ -289,7 +289,7 @@ public class CommsSender implements Runnable
 		clientState.releaseMessageId(message.getType());
 		running = false;
 
-		clientComms.shutdownConnection(null, mex);
+		clientComms.shutdownConnection(null, mex, true);
 	}
 
 	private void logSocketProperties()

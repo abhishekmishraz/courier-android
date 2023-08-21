@@ -295,7 +295,7 @@ internal class MqttConnection(
         return forceDisconnect
     }
 
-    override fun disconnect() {
+    override fun disconnect(shouldSendConnectionLost: Boolean) {
         try {
             if (mqtt != null) {
                 /*
@@ -318,7 +318,8 @@ internal class MqttConnection(
                 connectionConfig.connectionEventHandler.onMqttDisconnectStart()
                 mqtt!!.disconnectForcibly(
                     connectionConfig.quiesceTimeout.toLong(),
-                    connectionConfig.disconnectTimeout.toLong()
+                    connectionConfig.disconnectTimeout.toLong(),
+                    shouldSendConnectionLost
                 )
             }
         } catch (e: java.lang.Exception) {
@@ -593,7 +594,7 @@ internal class MqttConnection(
                         throwable = throwable,
                         timeTakenMillis = (clock.nanoTime() - context.startTime).fromNanosToMillis()
                     )
-                    runnableScheduler.disconnectMqtt(true)
+                    runnableScheduler.disconnectMqtt(true, shouldSendConnectionLost = true)
                 }
             }
         }
@@ -628,7 +629,7 @@ internal class MqttConnection(
                         throwable = throwable,
                         timeTakenMillis = (clock.nanoTime() - context.startTime).fromNanosToMillis()
                     )
-                    runnableScheduler.disconnectMqtt(true)
+                    runnableScheduler.disconnectMqtt(true, shouldSendConnectionLost = true)
                 }
             }
         }

@@ -160,9 +160,7 @@ sealed class MqttEvent(open var connectionInfo: ConnectionInfo?) {
         val topic: String,
         val qos: Int,
         val sizeBytes: Int,
-        override var connectionInfo: ConnectionInfo? = null,
-        val mqttToken: IMqttToken,
-        val message : ByteArray
+        override var connectionInfo: ConnectionInfo? = null
     ) : MqttEvent(connectionInfo)
 
     data class MqttMessageSendSuccessEvent(
@@ -170,7 +168,8 @@ sealed class MqttEvent(open var connectionInfo: ConnectionInfo?) {
         val qos: Int,
         val sizeBytes: Int,
         val timeTakenMillis: Long,
-        override var connectionInfo: ConnectionInfo? = null
+        override var connectionInfo: ConnectionInfo? = null,
+        val mqttToken: IMqttToken
     ) : MqttEvent(connectionInfo)
 
     data class MqttMessageSendFailureEvent(

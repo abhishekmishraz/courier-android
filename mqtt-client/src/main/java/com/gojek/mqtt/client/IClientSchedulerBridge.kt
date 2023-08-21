@@ -7,7 +7,7 @@ internal interface IClientSchedulerBridge {
     fun connectMqtt()
     fun connect(timeMillis: Long)
     fun sendMessage(mqttPacket: MqttSendPacket)
-    fun disconnectMqtt(clearState: Boolean)
+    fun disconnectMqtt(clearState: Boolean, shouldSendConnectionLost : Boolean)
     fun handleMqttException(exception: Exception?, reconnect: Boolean)
     fun isConnected(): Boolean
     fun isConnecting(): Boolean

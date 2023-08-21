@@ -233,7 +233,7 @@ public class CommsCallback implements Runnable, ICommsCallback
 				logger.e(TAG, "exception occured, shutting down : " , ex);
 				running = false;
 				logger.logInitEvent("callback_fail", System.currentTimeMillis(), threadId + " : " + ex.getMessage());
-				clientComms.shutdownConnection(null, new MqttException(ex));
+				clientComms.shutdownConnection(null, new MqttException(ex), true);
 			}
 		}
 	}
@@ -282,7 +282,7 @@ public class CommsCallback implements Runnable, ICommsCallback
 	 * This method is called when the connection to the server is lost. If there is no cause then it was a clean disconnect. The connectionLost callback will be invoked if
 	 * registered and run on the thread that requested shutdown e.g. receiver or sender thread. If the request was a user initiated disconnect then the disconnect token will be
 	 * notified.
-	 * 
+	 *
 	 * @param cause
 	 *            the reason behind the loss of connection.
 	 */
@@ -308,7 +308,7 @@ public class CommsCallback implements Runnable, ICommsCallback
 
 		}
 	}
-	
+
 	public void fastReconnect()
 	{
 		if (mqttCallback != null)
@@ -320,7 +320,7 @@ public class CommsCallback implements Runnable, ICommsCallback
 
 	/**
 	 * An action has completed - if a completion listener has been set on the token then invoke it with the outcome of the action.
-	 * 
+	 *
 	 * @param token
 	 */
 	public void fireActionEvent(MqttToken token)
@@ -350,7 +350,7 @@ public class CommsCallback implements Runnable, ICommsCallback
 
 	/**
 	 * This method is called when a message arrives on a topic. Messages are only added to the queue for inbound messages if the client is not quiescing.
-	 * 
+	 *
 	 * @param sendMessage
 	 *            the MQTT SEND message.
 	 */
@@ -478,7 +478,7 @@ public class CommsCallback implements Runnable, ICommsCallback
 				// Shutdown likely already in progress but no harm to confirm
 				System.err.println("problem in asyncopcomplete " + ex);
 				ex.printStackTrace();
-				clientComms.shutdownConnection(null, new MqttException(ex));
+				clientComms.shutdownConnection(null, new MqttException(ex), true);
 			}
 
 		}
