@@ -3,7 +3,7 @@ package com.gojek.chuckmqtt.internal.domain.mapper
 import com.gojek.chuckmqtt.internal.base.Mapper
 import com.gojek.chuckmqtt.internal.data.local.entity.MqttTransaction
 import com.gojek.chuckmqtt.internal.domain.model.MqttTransactionDomainModel
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage
+import org.eclipse.paho.client.mqttv3t.internal.wire.MqttWireMessage
 
 internal class MqttTransactionDomainModelMapper : Mapper<MqttTransaction, MqttTransactionDomainModel> {
 

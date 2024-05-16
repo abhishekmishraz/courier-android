@@ -58,7 +58,7 @@ internal class MqttClientInternal(
                     convergenceTime
                 )
             )
-            adaptiveMqttClient?.disconnect()
+            adaptiveMqttClient?.disconnect(shouldSendConnectionLost = true)
         }
     }
 
@@ -71,7 +71,8 @@ internal class MqttClientInternal(
             keepAliveProvider = keepAliveProvider,
             keepAliveFailureHandler = keepAliveFailureHandler,
             eventHandler = eventHandler,
-            pingEventHandler = PingEventHandler(eventHandler)
+            pingEventHandler = PingEventHandler(eventHandler),
+            shouldRetryOnException = mqttConfiguration.shouldRetryOnErrors
         )
     }
 
@@ -80,9 +81,9 @@ internal class MqttClientInternal(
         adaptiveMqttClient?.connect(connectOptions)
     }
 
-    fun disconnect(clearState: Boolean) {
-        androidMqttClient.disconnect(clearState)
-        adaptiveMqttClient?.disconnect(clearState)
+    fun disconnect(clearState: Boolean,  shouldSendConnectionLost : Boolean) {
+        androidMqttClient.disconnect(clearState,shouldSendConnectionLost)
+        adaptiveMqttClient?.disconnect(clearState,shouldSendConnectionLost)
     }
 
     fun reconnect() {

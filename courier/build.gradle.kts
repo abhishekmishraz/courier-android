@@ -3,12 +3,12 @@ import plugin.AndroidLibraryConfigurationPlugin
 apply<AndroidLibraryConfigurationPlugin>()
 apply("$rootDir/gradle/script-ext.gradle")
 
-val version = ext.get("gitVersionName")
+val version = "10.0.5"
 
 ext {
     set("PUBLISH_GROUP_ID", "com.gojek.courier")
     set("PUBLISH_ARTIFACT_ID", "courier")
-    set("PUBLISH_VERSION", ext.get("gitVersionName"))
+    set("PUBLISH_VERSION", "10.0.5")
     set("minimumCoverage", "0.0")
 }
 

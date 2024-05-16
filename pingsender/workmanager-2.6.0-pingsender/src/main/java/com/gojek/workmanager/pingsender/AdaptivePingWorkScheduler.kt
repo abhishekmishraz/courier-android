@@ -20,7 +20,7 @@ internal class AdaptivePingWorker(
 ) : Worker(context, workerParameters) {
     override fun doWork(): Result {
         val latch = CountDownLatch(1)
-        WorkManagerPingSenderAdaptive.pingSender?.sendPing {
+        WorkManagerPingSenderAdaptiveGojek.pingSender?.sendPing {
             latch.countDown()
         }
         val timeout = workerParameters.inputData.getLong(MQTT_PING_TIMEOUT_SECONDS, DEFAULT_PING_TIMEOUT_SECS)

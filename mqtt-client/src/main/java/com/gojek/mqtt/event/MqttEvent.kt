@@ -6,6 +6,7 @@ import com.gojek.mqtt.exception.CourierException
 import com.gojek.mqtt.model.MqttConnectOptions
 import com.gojek.mqtt.model.ServerUri
 import com.gojek.mqtt.network.ActiveNetInfo
+import org.eclipse.paho.client.mqttv3t.IMqttToken
 
 sealed class MqttEvent(open var connectionInfo: ConnectionInfo?) {
     data class MqttConnectAttemptEvent(
@@ -167,7 +168,8 @@ sealed class MqttEvent(open var connectionInfo: ConnectionInfo?) {
         val qos: Int,
         val sizeBytes: Int,
         val timeTakenMillis: Long,
-        override var connectionInfo: ConnectionInfo? = null
+        override var connectionInfo: ConnectionInfo? = null,
+        val mqttToken: IMqttToken
     ) : MqttEvent(connectionInfo)
 
     data class MqttMessageSendFailureEvent(

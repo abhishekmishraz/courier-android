@@ -27,19 +27,6 @@ import com.gojek.mqtt.model.KeepAlive
 import com.gojek.mqtt.model.MqttConnectOptions
 import com.gojek.mqtt.model.ServerUri
 import com.gojek.workmanager.pingsender.WorkManagerPingSenderConfig
-import com.gojek.workmanager.pingsender.WorkPingSenderFactory
-import kotlinx.android.synthetic.main.activity_main.brokerIP
-import kotlinx.android.synthetic.main.activity_main.brokerPort
-import kotlinx.android.synthetic.main.activity_main.clientId
-import kotlinx.android.synthetic.main.activity_main.connect
-import kotlinx.android.synthetic.main.activity_main.disconnect
-import kotlinx.android.synthetic.main.activity_main.message
-import kotlinx.android.synthetic.main.activity_main.password
-import kotlinx.android.synthetic.main.activity_main.send
-import kotlinx.android.synthetic.main.activity_main.subscribe
-import kotlinx.android.synthetic.main.activity_main.topic
-import kotlinx.android.synthetic.main.activity_main.unsubscribe
-import kotlinx.android.synthetic.main.activity_main.username
 import timber.log.Timber
 import java.util.*
 
@@ -52,62 +39,62 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initialiseCourier()
-        connect.setOnClickListener {
-            var clientId = clientId.text.toString()
-            if(clientId.isEmpty()) {
-                clientId = UUID.randomUUID().toString()
-            }
-            var username = username.text.toString()
-            if(username.isEmpty()) {
-                username = UUID.randomUUID().toString()
-            }
-            val password = password.text.toString()
-            var brokerIP = brokerIP.text.toString()
-            if(brokerIP.isEmpty()) {
-                brokerIP = "broker.mqttdashboard.com"
-            }
-            var port = 1883
-            if(brokerPort.text.toString().isNotEmpty()) {
-                port = Integer.parseInt(brokerPort.text.toString())
-            }
-            connectMqtt(clientId, username, password, brokerIP, port)
-        }
+//        connect.setOnClickListener {
+//            var clientId = clientId.text.toString()
+//            if(clientId.isEmpty()) {
+//                clientId = UUID.randomUUID().toString()
+//            }
+//            var username = username.text.toString()
+//            if(username.isEmpty()) {
+//                username = UUID.randomUUID().toString()
+//            }
+//            val password = password.text.toString()
+//            var brokerIP = brokerIP.text.toString()
+//            if(brokerIP.isEmpty()) {
+//                brokerIP = "broker.mqttdashboard.com"
+//            }
+//            var port = 1883
+//            if(brokerPort.text.toString().isNotEmpty()) {
+//                port = Integer.parseInt(brokerPort.text.toString())
+//            }
+//            connectMqtt(clientId, username, password, brokerIP, port)
+//        }
+//
+//        disconnect.setOnClickListener {
+//            mqttClient.disconnect()
+//        }
 
-        disconnect.setOnClickListener {
-            mqttClient.disconnect()
-        }
-
-        send.setOnClickListener {
-            courierService.publish(
-                topic = topic.text.toString(),
-                message = Message(123, message.text.toString()),
-                callback = object : SendMessageCallback {
-                    override fun onMessageSendTrigger() {
-                        Log.d("Courier", "onMessageSendTrigger")
-                    }
-
-                    override fun onMessageWrittenOnSocket() {
-                        Log.d("Courier", "onMessageWrittenOnSocket")
-                    }
-
-                    override fun onMessageSendSuccess() {
-                        Log.d("Courier", "onMessageSendSuccess")
-                    }
-
-                    override fun onMessageSendFailure(error: Throwable) {
-                        Log.d("Courier", "onMessageSendFailure")
-                    }
-                }
-            )
-        }
-
-        subscribe.setOnClickListener {
-            courierService.subscribe(topic = topic.text.toString())
-        }
-
-        unsubscribe.setOnClickListener {
-            courierService.unsubscribe(topic = topic.text.toString())
-        }
+//        send.setOnClickListener {
+//            courierService.publish(
+//                topic = topic.text.toString(),
+//                message = Message(123, message.text.toString()),
+//                callback = object : SendMessageCallback {
+//                    override fun onMessageSendTrigger() {
+//                        Log.d("Courier", "onMessageSendTrigger")
+//                    }
+//
+//                    override fun onMessageWrittenOnSocket() {
+//                        Log.d("Courier", "onMessageWrittenOnSocket")
+//                    }
+//
+//                    override fun onMessageSendSuccess() {
+//                        Log.d("Courier", "onMessageSendSuccess")
+//                    }
+//
+//                    override fun onMessageSendFailure(error: Throwable) {
+//                        Log.d("Courier", "onMessageSendFailure")
+//                    }
+//                }
+//            )
+//        }
+//
+//        subscribe.setOnClickListener {
+//            courierService.subscribe(topic = topic.text.toString())
+//        }
+//
+//        unsubscribe.setOnClickListener {
+//            courierService.unsubscribe(topic = topic.text.toString())
+//        }
     }
 
     private fun connectMqtt(clientId: String, username: String, password: String, ip: String, port: Int) {
@@ -124,48 +111,48 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initialiseCourier() {
-        val mqttConfig = MqttV3Configuration(
-            logger = getLogger(),
-            authenticator = object : Authenticator {
-                override fun authenticate(
-                    connectOptions: MqttConnectOptions,
-                    forceRefresh: Boolean
-                ): MqttConnectOptions {
-                    return connectOptions.newBuilder()
-                        .password(password.text.toString())
-                        .build()
-                }
-            },
-            mqttInterceptorList = listOf(MqttChuckInterceptor(this, MqttChuckConfig(retentionPeriod = Period.ONE_HOUR))),
-            persistenceOptions = PahoPersistenceOptions(100, false),
-            experimentConfigs = ExperimentConfigs(
-                adaptiveKeepAliveConfig = AdaptiveKeepAliveConfig(
-                    lowerBoundMinutes = 1,
-                    upperBoundMinutes = 9,
-                    stepMinutes = 2,
-                    optimalKeepAliveResetLimit = 10,
-                    pingSender = WorkPingSenderFactory.createAdaptiveMqttPingSender(applicationContext, WorkManagerPingSenderConfig())
-                ),
-                inactivityTimeoutSeconds = 45,
-                activityCheckIntervalSeconds = 30,
-                connectPacketTimeoutSeconds = 5,
-                incomingMessagesTTLSecs = 60,
-                incomingMessagesCleanupIntervalSecs = 10,
-                maxInflightMessagesLimit = 1000,
-            ),
-            pingSender = WorkPingSenderFactory.createMqttPingSender(applicationContext, WorkManagerPingSenderConfig(sendForcePing = true))
-        )
-        mqttClient = MqttClientFactory.create(this, mqttConfig)
-        mqttClient.addEventHandler(eventHandler)
-
-        val configuration = Courier.Configuration(
-            client = mqttClient,
-            streamAdapterFactories = listOf(RxJava2StreamAdapterFactory()),
-            messageAdapterFactories = listOf(GsonMessageAdapterFactory()),
-            logger = getLogger()
-        )
-        val courier = Courier(configuration)
-        courierService = courier.create()
+//        val mqttConfig = MqttV3Configuration(
+//            logger = getLogger(),
+//            authenticator = object : Authenticator {
+//                override fun authenticate(
+//                    connectOptions: MqttConnectOptions,
+//                    forceRefresh: Boolean
+//                ): MqttConnectOptions {
+//                    return connectOptions.newBuilder()
+//                        .password(password.text.toString())
+//                        .build()
+//                }
+//            },
+//            mqttInterceptorList = listOf(MqttChuckInterceptor(this, MqttChuckConfig(retentionPeriod = Period.ONE_HOUR))),
+//            persistenceOptions = PahoPersistenceOptions(100, false),
+//            experimentConfigs = ExperimentConfigs(
+//                adaptiveKeepAliveConfig = AdaptiveKeepAliveConfig(
+//                    lowerBoundMinutes = 1,
+//                    upperBoundMinutes = 9,
+//                    stepMinutes = 2,
+//                    optimalKeepAliveResetLimit = 10,
+//                    pingSender = WorkPingSenderFactory.createAdaptiveMqttPingSender(applicationContext, WorkManagerPingSenderConfig())
+//                ),
+//                inactivityTimeoutSeconds = 45,
+//                activityCheckIntervalSeconds = 30,
+//                connectPacketTimeoutSeconds = 5,
+//                incomingMessagesTTLSecs = 60,
+//                incomingMessagesCleanupIntervalSecs = 10,
+//                maxInflightMessagesLimit = 1000,
+//            ),
+//            pingSender = WorkPingSenderFactory.createMqttPingSender(applicationContext, WorkManagerPingSenderConfig(sendForcePing = true))
+//        )
+//        mqttClient = MqttClientFactory.create(this, mqttConfig)
+//        mqttClient.addEventHandler(eventHandler)
+//
+//        val configuration = Courier.Configuration(
+//            client = mqttClient,
+//            streamAdapterFactories = listOf(RxJava2StreamAdapterFactory()),
+//            messageAdapterFactories = listOf(GsonMessageAdapterFactory()),
+//            logger = getLogger()
+//        )
+//        val courier = Courier(configuration)
+//        courierService = courier.create()
     }
 
     private val eventHandler = object : EventHandler {

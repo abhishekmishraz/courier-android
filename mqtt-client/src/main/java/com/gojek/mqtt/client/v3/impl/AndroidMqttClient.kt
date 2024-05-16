@@ -62,7 +62,7 @@ import com.gojek.mqtt.network.NetworkHandler
 import com.gojek.mqtt.persistence.impl.PahoPersistence
 import com.gojek.mqtt.persistence.model.MqttReceivePacket
 import com.gojek.mqtt.persistence.model.toMqttMessage
-import com.gojek.mqtt.pingsender.MqttPingSender
+import com.gojek.mqtt.pingsender.GojekMqttPingSender
 import com.gojek.mqtt.policies.hostfallback.HostFallbackPolicy
 import com.gojek.mqtt.policies.hostfallback.IHostFallbackPolicy
 import com.gojek.mqtt.scheduler.IRunnableScheduler
@@ -78,18 +78,20 @@ import com.gojek.mqtt.wakelock.WakeLockProvider
 import com.gojek.networktracker.NetworkStateTracker
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
-import org.eclipse.paho.client.mqttv3.MqttException
-import org.eclipse.paho.client.mqttv3.MqttException.REASON_CODE_UNEXPECTED_ERROR
-import org.eclipse.paho.client.mqttv3.MqttPersistenceException
+import org.eclipse.paho.client.mqttv3t.IMqttToken
+import org.eclipse.paho.client.mqttv3t.MqttException
+import org.eclipse.paho.client.mqttv3t.MqttException.REASON_CODE_UNEXPECTED_ERROR
+import org.eclipse.paho.client.mqttv3t.MqttPersistenceException
 
 internal class AndroidMqttClient(
     private val context: Context,
     private val mqttConfiguration: MqttV3Configuration,
     private val networkStateTracker: NetworkStateTracker,
-    private val mqttPingSender: MqttPingSender,
+    private val gojekMqttPingSender: GojekMqttPingSender,
     private val isAdaptiveKAConnection: Boolean = false,
     private val keepAliveProvider: KeepAliveProvider,
     private val eventHandler: EventHandler,
+    private val shouldReconnectOnException: Boolean = false,
     keepAliveFailureHandler: KeepAliveFailureHandler
 ) : IAndroidMqttClient, IClientSchedulerBridge {
 
@@ -192,10 +194,11 @@ internal class AndroidMqttClient(
             messageSendListener = messageSendListener,
             pahoPersistence = mqttPersistence,
             networkHandler = networkHandler,
-            mqttPingSender = getMqttPingSender(),
+            gojekMqttPingSender = getMqttPingSender(),
             keepAliveFailureHandler = keepAliveFailureHandler,
             clock = clock,
-            subscriptionStore = subscriptionStore
+            subscriptionStore = subscriptionStore,
+            shouldReconnectOnException = false
         )
         incomingMsgController = IncomingMsgControllerImpl(
             mqttUtils,
@@ -221,13 +224,13 @@ internal class AndroidMqttClient(
     // This can be invoked on any thread
     override fun reconnect() {
         eventHandler.onEvent(MqttReconnectEvent())
-        runnableScheduler.disconnectMqtt(true)
+        runnableScheduler.disconnectMqtt(reconnect = true, shouldSendConnectionLost = true)
     }
 
     // This can be invoked on any thread
-    override fun disconnect(clearState: Boolean) {
+    override fun disconnect(clearState: Boolean, shouldSendConnectionLost: Boolean) {
         isInitialised = false
-        runnableScheduler.disconnectMqtt(false, clearState)
+        runnableScheduler.disconnectMqtt(false,clearState, shouldSendConnectionLost = shouldSendConnectionLost)
     }
 
     // This can be invoked on any thread
@@ -294,6 +297,16 @@ internal class AndroidMqttClient(
                     )
                 )
             }
+        }
+    }
+
+    override fun disconnectMqtt(clearState: Boolean, shouldSendConnectionLost: Boolean) {
+        eventHandler.onEvent(MqttDisconnectEvent())
+        mqttConnection.disconnect(shouldSendConnectionLost)
+        if (clearState) {
+            mqttConnection.shutDown()
+            subscriptionStore.clear()
+            mqttPersistence.clearAll()
         }
     }
 
@@ -392,7 +405,7 @@ internal class AndroidMqttClient(
                 runnableScheduler.connectMqtt(TimeUnit.SECONDS.toMillis(e.nextRetrySeconds))
             } else {
                 val mqttException = MqttException(REASON_CODE_UNEXPECTED_ERROR.toInt(), e)
-                runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, true)
+                runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, shouldReconnectOnException)
             }
         } catch (e: Exception) /* this exception cannot be thrown on connect */ {
             logger.e(TAG, "Connect exception : ${e.message}")
@@ -405,18 +418,7 @@ internal class AndroidMqttClient(
                 )
             )
             val mqttException = MqttException(REASON_CODE_UNEXPECTED_ERROR.toInt(), e)
-            runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, true)
-        }
-    }
-
-    // This runs on Mqtt thread
-    override fun disconnectMqtt(clearState: Boolean) {
-        eventHandler.onEvent(MqttDisconnectEvent())
-        mqttConnection.disconnect()
-        if (clearState) {
-            mqttConnection.shutDown()
-            subscriptionStore.clear()
-            mqttPersistence.clearAll()
+            runnableScheduler.scheduleMqttHandleExceptionRunnable(mqttException, shouldReconnectOnException)
         }
     }
 
@@ -445,15 +447,19 @@ internal class AndroidMqttClient(
             mqttConnection.isConnecting() -> {
                 CONNECTING
             }
+
             mqttConnection.isConnected() -> {
                 CONNECTED
             }
+
             mqttConnection.isDisconnecting() -> {
                 DISCONNECTING
             }
+
             mqttConnection.isDisconnected() -> {
                 DISCONNECTED
             }
+
             else -> {
                 INITIALISED
             }
@@ -510,8 +516,8 @@ internal class AndroidMqttClient(
         incomingMsgController.triggerHandleMessage()
     }
 
-    private fun getMqttPingSender(): MqttPingSender {
-        return mqttPingSender
+    private fun getMqttPingSender(): GojekMqttPingSender {
+        return gojekMqttPingSender
     }
 
     private fun postProcessConnectOptions(connectOptions: MqttConnectOptions): MqttConnectOptions {
@@ -572,7 +578,7 @@ internal class AndroidMqttClient(
                     MqttMessageReceiveErrorEvent(topic, byteArray.size, e.toCourierException())
                 )
                 logger.e(TAG, "Exception when msg arrived : ", e)
-                runnableScheduler.disconnectMqtt(true)
+                runnableScheduler.disconnectMqtt(true, shouldSendConnectionLost = true)
                 return false
             } catch (e: Throwable) {
                 eventHandler.onEvent(
@@ -586,7 +592,8 @@ internal class AndroidMqttClient(
 
     inner class MqttMessageSendListener :
         IMessageSendListener {
-        override fun onSuccess(packet: MqttSendPacket) {
+
+        override fun onSuccess(packet: MqttSendPacket, iMqttToken: IMqttToken) {
             packet.sendMessageCallback.onMessageSendSuccess()
             with(packet) {
                 eventHandler.onEvent(
@@ -594,7 +601,8 @@ internal class AndroidMqttClient(
                         topic = topic,
                         qos = qos,
                         sizeBytes = message.size,
-                        timeTakenMillis = (System.nanoTime() - triggerTime).fromNanosToMillis()
+                        timeTakenMillis = (System.nanoTime() - triggerTime).fromNanosToMillis(),
+                        mqttToken = iMqttToken
                     )
                 )
             }

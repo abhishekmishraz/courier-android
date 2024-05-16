@@ -22,7 +22,7 @@ plugins {
     id("com.android.library")
     kotlin("android")
     kotlin("android.extensions")
-    kotlin("kapt")
+//    kotlin("kapt")
     id("kotlin-android")
     id(ScriptPlugins.apiValidator) version versions.apiValidator
 }
@@ -52,7 +52,7 @@ dependencies {
 
     implementation(deps.android.room.roomRuntime)
     implementation(deps.android.room.roomRxJava)
-    kapt(deps.android.room.roomCompiler)
+//    kapt(deps.android.room.roomCompiler)
 
     implementation(deps.rx.java)
     implementation(deps.rx.android)

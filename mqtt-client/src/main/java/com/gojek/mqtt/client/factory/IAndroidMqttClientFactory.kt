@@ -10,7 +10,7 @@ import com.gojek.mqtt.client.v3.impl.AndroidMqttClient
 import com.gojek.mqtt.event.EventHandler
 import com.gojek.mqtt.event.NoOpEventHandler
 import com.gojek.mqtt.pingsender.IPingSenderEvents
-import com.gojek.mqtt.pingsender.MqttPingSender
+import com.gojek.mqtt.pingsender.GojekMqttPingSender
 import com.gojek.networktracker.NetworkStateTracker
 
 internal interface IAndroidMqttClientFactory {
@@ -21,16 +21,18 @@ internal interface IAndroidMqttClientFactory {
         keepAliveProvider: KeepAliveProvider,
         keepAliveFailureHandler: KeepAliveFailureHandler,
         eventHandler: EventHandler,
-        pingEventHandler: IPingSenderEvents
+        pingEventHandler: IPingSenderEvents,
+        shouldRetryOnException : Boolean = false,
     ): IAndroidMqttClient
     fun createAdaptiveAndroidMqttClient(
-        pingSender: MqttPingSender,
+        pingSender: GojekMqttPingSender,
         context: Context,
         mqttConfiguration: MqttV3Configuration,
         networkStateTracker: NetworkStateTracker,
         keepAliveProvider: KeepAliveProvider,
         keepAliveFailureHandler: KeepAliveFailureHandler,
-        pingEventHandler: IPingSenderEvents
+        pingEventHandler: IPingSenderEvents,
+        shouldRetryOnException : Boolean = false
     ): IAndroidMqttClient
 }
 
@@ -42,7 +44,8 @@ internal class AndroidMqttClientFactory : IAndroidMqttClientFactory {
         keepAliveProvider: KeepAliveProvider,
         keepAliveFailureHandler: KeepAliveFailureHandler,
         eventHandler: EventHandler,
-        pingEventHandler: IPingSenderEvents
+        pingEventHandler: IPingSenderEvents,
+        shouldRetryOnException : Boolean
     ): IAndroidMqttClient {
         val pingSender = mqttConfiguration.pingSender
         pingSender.setPingEventHandler(pingEventHandler)
@@ -50,21 +53,23 @@ internal class AndroidMqttClientFactory : IAndroidMqttClientFactory {
             context = context,
             mqttConfiguration = mqttConfiguration,
             networkStateTracker = networkStateTracker,
-            mqttPingSender = pingSender,
+            gojekMqttPingSender = pingSender,
             keepAliveProvider = keepAliveProvider,
             keepAliveFailureHandler = keepAliveFailureHandler,
-            eventHandler = eventHandler
+            eventHandler = eventHandler,
+            shouldReconnectOnException = shouldRetryOnException
         )
     }
 
     override fun createAdaptiveAndroidMqttClient(
-        pingSender: MqttPingSender,
+        pingSender: GojekMqttPingSender,
         context: Context,
         mqttConfiguration: MqttV3Configuration,
         networkStateTracker: NetworkStateTracker,
         keepAliveProvider: KeepAliveProvider,
         keepAliveFailureHandler: KeepAliveFailureHandler,
-        pingEventHandler: IPingSenderEvents
+        pingEventHandler: IPingSenderEvents,
+        shouldRetryOnException : Boolean
     ): IAndroidMqttClient {
         pingSender.setPingEventHandler(pingEventHandler)
         return AndroidMqttClient(
@@ -73,11 +78,12 @@ internal class AndroidMqttClientFactory : IAndroidMqttClientFactory {
                 logger = NoOpLogger()
             ),
             networkStateTracker = networkStateTracker,
-            mqttPingSender = pingSender,
+            gojekMqttPingSender = pingSender,
             isAdaptiveKAConnection = true,
             keepAliveProvider = keepAliveProvider,
             keepAliveFailureHandler = keepAliveFailureHandler,
-            eventHandler = NoOpEventHandler()
+            eventHandler = NoOpEventHandler(),
+            shouldReconnectOnException = shouldRetryOnException
         )
     }
 }

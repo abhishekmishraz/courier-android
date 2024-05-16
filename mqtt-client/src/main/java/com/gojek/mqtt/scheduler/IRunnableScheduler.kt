@@ -7,7 +7,10 @@ internal interface IRunnableScheduler {
 
     fun connectMqtt(timeMillis: Long)
 
-    fun disconnectMqtt(reconnect: Boolean, clearState: Boolean = false)
+    fun disconnectMqtt(
+        reconnect: Boolean, clearState: Boolean = false,
+        shouldSendConnectionLost: Boolean
+    )
 
     fun scheduleNextActivityCheck()
 
